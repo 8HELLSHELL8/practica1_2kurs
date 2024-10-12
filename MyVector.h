@@ -70,7 +70,7 @@ public:
     {
     if (index < 0 || index > size_of_Vec) 
     {
-        throw out_of_range("Index out of range!!!");
+        throw std::out_of_range("Index out of range!!!");
     }
 
     if (size_of_Vec == memory_size) 
@@ -99,7 +99,7 @@ public:
     {
     if (index < 0 || index >= size_of_Vec) 
     {
-        throw out_of_range("Index out of range!!!");
+        throw std::out_of_range("Index out of range!!!");
     }
 
     for (size_t i = index; i < size_of_Vec - 1; i++) 
@@ -123,7 +123,7 @@ public:
     {
     if (index < 0 || index >= size_of_Vec) 
     {
-        throw out_of_range("Index out of range!!!");
+        throw std::out_of_range("Index out of range!!!");
     }
     arr[index] = name;  
     }
@@ -152,18 +152,18 @@ public:
     void print() const 
     {
     for (int i = 0; i < size_of_Vec; i++) {
-        cout << arr[i] << " ";
+        std::cout << arr[i] << " ";
     }
-    cout << "\n";
+    std::cout << "\n";
     }  
     
     void save_to_file(const std::string& filename, bool overwrite) const 
     {
-    ios_base::openmode mode = overwrite ? ios::trunc : ios::app;
-    ofstream file(filename, mode);  
+    std::ios_base::openmode mode = overwrite ? std::ios::trunc : std::ios::app;
+    std::fstream file(filename, mode);  
     if (!file) 
     {
-        cerr << "Error opening a file for writing: " << filename << endl; 
+        std::cerr << "Error opening a file for writing: " << filename << std::endl; 
         return; 
     }
 
@@ -177,7 +177,7 @@ public:
 
     void load_from_file(const std::string& filename) 
     {
-    ifstream file(filename);
+    std::fstream file(filename);
     if (file.is_open()) 
     {
         T value;
@@ -189,8 +189,17 @@ public:
     } 
     else 
     {
-        cerr << "Error opening the file for reading. \n";
+        std::cerr << "Error opening the file for reading. \n";
     }
     }
     
+    T& operator[] (int index)
+    {
+        if (index < 0 || index >= size_of_Vec)
+        {
+            throw std::out_of_range("Index out of range!");
+        }
+        return arr[index];
+    }
+
 };
