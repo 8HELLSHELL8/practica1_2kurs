@@ -3,7 +3,10 @@
 #include <filesystem>
 #include <sstream>
 #include "cjson/cJSON.h"
+#include "MyVector.h"
 using namespace std;
+
+
 
 string readJSON(const string& fileName)
 {
@@ -21,16 +24,27 @@ string readJSON(const string& fileName)
     return buffer.str();
 }
 
-bool createDir()
+bool createDir(const string& dirName)
 {
-    if (filesystem::create_directory("123")) return true;
+    if (filesystem::create_directory(dirName)) return true;
     else return false;
 }
 
+void createDB()
+{
+    
+}
 
-int main()
+
+bool checkDB()
+{
+    fstream jsonConfig("schema.json");
+    return jsonConfig.good();
+}
+
+int main(int argv, char** argc)
 {
 
-    createDir();
+    createDir("123");
     return 0;
 }
