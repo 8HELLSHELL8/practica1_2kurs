@@ -51,12 +51,14 @@ void createFilesInSubfolder(const cJSON* table, const int& tuplesLimit, const cJ
     }
     CSV << endl;
     CSV.close();
-
-    ofstream PKSEQ(subName+"/"+subName + "_pk_sequence"); // cozdanie schetchika
+    
+    
+    
+    ofstream PKSEQ(subName + "/" + table->string +"_pk_sequence"); // cozdanie schetchika
     PKSEQ << "1";
     PKSEQ.close();
 
-    ofstream PKLOCK(subName+"/"+subName + "_pk_sequence"); // cozdanie mutexa
+    ofstream PKLOCK(subName + "/" + table->string +"_lock"); // cozdanie mutexa
     PKLOCK << "0";
     PKLOCK.close();
 }
