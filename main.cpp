@@ -65,6 +65,9 @@ void createFilesInSubfolder(const cJSON* table, const int& tuplesLimit, const cJ
 
 void createDB()
 {
+    ofstream DBFlag("DBflag"); //flag nalichiya db
+    DBFlag.close();
+
     string jsonContent = readJSON("schema.json");
 
     if (jsonContent.empty())
@@ -104,13 +107,17 @@ void checkDB()
 {
     bool isCreated = false;
     fstream jsonConfig("schema.json");
-    if (jsonConfig.good()) createDB();
+    if (jsonConfig.good() && !std::filesystem::exists("DBflag"))
+    {
+        createDB();
+        cout << "database created!" << endl;
+    } 
     else cout << "database already exists!" << endl;
 }
 
 int main(int argv, char** argc)
 {
-
-    createDB();
+    
+    checkDB();
     return 0;
 }
