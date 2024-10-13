@@ -25,7 +25,6 @@ string readJSON(const string& fileName)
     return buffer.str();
 }
 
-
 bool createDir(const string& dirName)
 {
     if (filesystem::create_directory(dirName)) return true;
@@ -68,7 +67,7 @@ void createDB()
     ofstream DBFlag("DBflag"); //flag nalichiya db
     DBFlag.close();
 
-    string jsonContent = readJSON("schema.json");
+    string jsonContent = readJSON("schema.json"); // otkritie .json
 
     if (jsonContent.empty())
     {
@@ -76,7 +75,7 @@ void createDB()
         exit(-1);
     }
 
-    cJSON* json = cJSON_Parse(jsonContent.c_str());
+    cJSON* json = cJSON_Parse(jsonContent.c_str()); // parsing .json
 
     if (json == nullptr)
     {
@@ -92,7 +91,7 @@ void createDB()
 
     cJSON* structure = cJSON_GetObjectItem(json, "structure"); //parsing structuri
 
-    for (cJSON* table = structure->child; table != nullptr;table = table->next)
+    for (cJSON* table = structure->child; table != nullptr;table = table->next) // sozdanie papok tablic
     {
         string subName = DataBaseName+"/"+table->string;
         createDir(subName);
@@ -101,7 +100,6 @@ void createDB()
 
     cJSON_Delete(json);
 }
-
 
 void checkDB()
 {
@@ -115,9 +113,68 @@ void checkDB()
     else cout << "database already exists!" << endl;
 }
 
-int main(int argv, char** argc)
+Myvector<string> readInput(int argc, char** argv)
+{
+    Myvector<string> commands;
+    for (int i = 0; i < argc; i++ )
+    {
+        commands.MPUSH(argv[i]);
+    }
+    return commands;
+}
+
+Myvector<HASHtable<string>> readTableContent(string pathToTable)
+{   
+    Myvector<string> columnNames;
+    string firstLine;
+    getline(cin,firstLine);
+    cout << firstLine;
+    return;
+}
+
+
+void handleCommands(Myvector<string>& commandVector)
+{
+    commandVector.MDEL(0);
+    if (commandVector.size() == 0)
+    {
+        cerr << "Empty query for program!" << endl;
+        exit(0);
+    }
+    if (commandVector[0] == "SELECT")
+    {
+        
+        commandVector.MDEL(0);
+        cout << "SELECT FROM has been called!" << endl;
+        commandVector.print();
+
+        Myvector<string> selectedCell; // table1.column1 etc
+
+    }
+    else if (commandVector[0] == "INSERT" && commandVector[1] == "INTO")
+    {
+        commandVector.MDEL(0);
+        commandVector.MDEL(0);
+        cout << "INSERT INTO has been called!" << endl;
+        commandVector.print();
+    }
+    else if (commandVector[0] == "DELETE" && commandVector[1] == "FROM")
+    {
+        commandVector.MDEL(0);
+        commandVector.MDEL(0);
+        cout << "DELETE FROM has been called!" << endl;
+        commandVector.print();
+    }
+}
+
+
+
+int main(int argc, char** argv)
 {
     
-    checkDB();
+    //checkDB();
+    //Myvector<string> commandVector = readInput(argc, argv);
+    //handleCommands(commandVector);
+    Myvector<HASHtable<string>>tablica = readTableContent("Схема 1/таблица1/1.csv");
     return 0;
 }
