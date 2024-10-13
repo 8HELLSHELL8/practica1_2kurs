@@ -140,12 +140,10 @@ string subString(string oldLine, int startIndex, int endIndex)
     return newLine;
 }
 
-Myvector<HASHtable<string>> readTableContent(string tableName)
+Myvector<HASHtable<string>> readTableContent(const string& tableName, Myvector<string>& columnNames)
 {   
     Myvector<HASHtable<string>> fullTable;
-    Myvector<string> columnNames;
     string firstLine;
-    
 
     fstream tableFile("Схема 1/" + tableName + "/"+"1.csv");
     if(tableFile.bad())
@@ -217,10 +215,48 @@ void unlockTable(const string& pathToDir)
     lockFile.close();
 }
 
+void increaseSequence(const string& pathToDir)
+{
+    string currentNum;
+
+    ifstream pk_seqRead("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    if (pk_seqRead.bad()) cerr << "Error with pk_seq";
+    getline(pk_seqRead,currentNum,'\n');
+    pk_seqRead.close();
+
+    ofstream pk_seqWrite("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    if (pk_seqWrite.bad()) cerr << "Error with pk_seq";
+    pk_seqWrite << stoi(currentNum)+1;
+    pk_seqWrite.close();
+    
+}
+
+void decreaseSequence(const string& pathToDir)
+{
+    string currentNum;
+
+    ifstream pk_seqRead("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    if (pk_seqRead.bad()) cerr << "Error with pk_seq";
+    getline(pk_seqRead,currentNum,'\n');
+    pk_seqRead.close();
+
+    ofstream pk_seqWrite("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    if (pk_seqWrite.bad()) cerr << "Error with pk_seq";
+    pk_seqWrite << stoi(currentNum)-1;
+    pk_seqWrite.close();
+    
+}
+
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
- const Myvector<string>& values)
+ const Myvector<string>& values, const Myvector<string>& columnNames)
 {
     lockTable(pathToDir);
+
+    int tableWidth = columnNames.size();
+
+
+
+
     unlockTable(pathToDir);
 }
 
@@ -250,7 +286,7 @@ void handleCommands(Myvector<string>& commandVector)
 
         cout << "INSERT INTO has been called!" << endl;
         string tableName = commandVector[0];
-
+        
         commandVector.MDEL(0);
 
         if (commandVector[0] != "VALUES")
@@ -260,9 +296,9 @@ void handleCommands(Myvector<string>& commandVector)
         }
         
         commandVector.MDEL(0);
-        
-        Myvector<HASHtable<string>> fullTable = readTableContent(tableName);
-        insertIntoTable(fullTable,tableName,commandVector);
+        Myvector<string> columnNames;
+        Myvector<HASHtable<string>> fullTable = readTableContent(tableName, columnNames);
+        insertIntoTable(fullTable,tableName,commandVector, columnNames);
         cout << "ROFLOfsdfsfsdf";
     }
     else if (commandVector[0] == "DELETE" && commandVector[1] == "FROM")
@@ -299,10 +335,13 @@ int main()
     // Pomnit` pro probeli v .csv
 
     //checkDB();
-    string input;
-    getline(cin, input);
-    Myvector<string> commandVector = handleUserInput(input);
-    handleCommands(commandVector);
+    // string input;
+    // getline(cin, input);
+    // Myvector<string> commandVector = handleUserInput(input);
+    // handleCommands(commandVector);
+
+
+    decreaseSequence("таблица1");
 
     //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
     //cout << tablica1.size() << endl;
