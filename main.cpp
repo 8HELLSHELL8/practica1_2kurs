@@ -221,7 +221,6 @@ void insertIntoTable(Myvector<HASHtable<string>>& table, const string& path,
 
 void handleCommands(Myvector<string>& commandVector)
 {
-    commandVector.MDEL(0);
     commandVector.print();
     cout << commandVector.size();
     if (commandVector.size() == 0)
@@ -262,27 +261,16 @@ Myvector<string> handleUserInput(const string& input)
     
     for (int i = 0; i < input.size(); i++)
     {
-        command += input[i];
-        if (input[i] == ' ') 
+        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')')
         {
-            commandArray.MPUSH(command);
+            if (command.size() != 0) commandArray.MPUSH(command);
             command = "";
         }
-        else if (input[i] == '\'' || input[i] == ',' || input[i] == '(' || input[i] == ')') 
+        else
         {
-            if(command.size() != 0)
-            {
-                commandArray.MPUSH(command);
-                command = "";
-            } 
-            
-            //command = "";
-            continue;
+            command += input[i];
         }
-        
     }
-
-
     return commandArray;
 }
 
@@ -295,9 +283,7 @@ int main()
     string input;
     getline(cin, input);
     Myvector<string> commandVector = handleUserInput(input);
-    commandVector.print();
-    //Myvector<string> commandVector = readInput(argc, argv);
-    //handleCommands(commandVector);
+    handleCommands(commandVector);
 
     //  Myvector<HASHtable<string>> tablica1 = readTableContent("Схема 1/таблица1/1.csv");
     //  cout << tablica1.size() << endl;
