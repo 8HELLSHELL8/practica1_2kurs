@@ -112,12 +112,19 @@ private:
    }
 
 public:
+  
+   HASHtable()
+   {
+       arr = new Hbuckets<T>[50];  
+       capacity = 10;
+   }
+
    HASHtable(int capacityValue)
    {
        arr = new Hbuckets<T>[capacityValue];  // Âûäåëÿåì ìàññèâ áàêåòîâ
        capacity = capacityValue;
    }
-
+   
    // Ìåòîä âñòàâêè ýëåìåíòà
    void HSET(const std::string& key, const T& value)
    {
@@ -150,8 +157,9 @@ public:
        }
    }
 
-   ~HASHtable()
-   {
-       delete[] arr;
-   }
+
+//    ~HASHtable()
+//    {
+//        delete[] arr;
+//    }
 };

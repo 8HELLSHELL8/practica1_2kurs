@@ -123,13 +123,101 @@ Myvector<string> readInput(int argc, char** argv)
     return commands;
 }
 
+// Myvector<HASHtable<string>> readTableContent(string pathToTable)
+// {   
+//     Myvector<string> columnNames;
+//     string firstLine;
+//     getline(cin,firstLine);
+//     cout << firstLine;
+//     return ;
+// }
+
+Myvector<string> getLineNames(string rawLine)
+{
+    string columnName;
+    Myvector<string> columnNames;
+    for (int i = 0; i < rawLine.size(); i++)
+    {
+        if (rawLine[i] == ' ')
+        {
+            columnNames.MPUSH(columnName);
+            columnName = "";
+            continue;
+        }
+        else columnName += rawLine[i];
+    }
+    return columnNames;
+}
+
+string subString(string oldLine, int startIndex, int endIndex)
+{
+    string newLine = "";
+    for (int i = startIndex; i < endIndex; i++)
+    {
+        newLine += oldLine[i];
+    }
+    return newLine;
+}
+
 Myvector<HASHtable<string>> readTableContent(string pathToTable)
 {   
+    Myvector<HASHtable<string>> fullTable;
     Myvector<string> columnNames;
     string firstLine;
-    getline(cin,firstLine);
-    cout << firstLine;
-    return;
+    fstream tableFile(pathToTable);
+    getline(tableFile,firstLine);
+    columnNames = getLineNames(firstLine); // zapis column names po otdelnosti
+    
+    int tableWidth = columnNames.size();
+    HASHtable<string> row(tableWidth);
+
+    for (int i = 0; i < columnNames.size(); i++)
+    {
+        row.HSET(columnNames[i],columnNames[i]);
+    }
+    fullTable.MPUSH(row);
+    
+    
+    string dirPath = subString(pathToTable,0,pathToTable.size()-5);
+    string tableName = subString(dirPath, 13,dirPath.size()-1);
+
+
+    string pkSeqContent;
+    fstream pkSeq(dirPath + tableName + "_pk_sequence");
+    getline(pkSeq, pkSeqContent);
+    pkSeq.close();
+
+    int amountOfLinesInTable = stoi(pkSeqContent);
+    
+    
+   
+    if (amountOfLinesInTable == 1)
+    {
+        return fullTable;
+    }
+    else
+    {
+        for (int i = 0; i < amountOfLinesInTable-1; i++)
+        {   
+            HASHtable<string> row(tableWidth);
+            Myvector<string> columnValues;
+            getline(tableFile,firstLine);
+
+            columnValues = getLineNames(firstLine);
+            columnValues.print();
+            for (int j = 0; j < columnValues.size(); j++)
+            {
+                row.HSET(columnNames[j],columnValues[j]);
+            }
+            
+            fullTable.MPUSH(row);  
+        }
+          
+    }
+   
+    
+    tableFile.close();
+    return fullTable;
 }
 
 
@@ -171,10 +259,16 @@ void handleCommands(Myvector<string>& commandVector)
 
 int main(int argc, char** argv)
 {
-    
+    // Pomnit` pro probeli v .csv
+
+
     //checkDB();
     //Myvector<string> commandVector = readInput(argc, argv);
     //handleCommands(commandVector);
-    Myvector<HASHtable<string>>tablica = readTableContent("Схема 1/таблица1/1.csv");
+
+    // Myvector<HASHtable<string>>tablica1 = readTableContent("Схема 1/таблица1/1.csv");
+    // cout << tablica1.size() << endl;
+    // tablica1[1].print();
+
     return 0;
 }
