@@ -113,17 +113,6 @@ void checkDB()
     else cout << "database already exists!" << endl;
 }
 
-Myvector<string> readInput(int argc, char** argv)
-{
-    Myvector<string> commands;
-    for (int i = 0; i < argc; i++ )
-    {
-        //if (argv[i] == "(" || argv[i] == ")" || argv[i] == "'" || argv[i] == ")") continue;
-        commands.MPUSH(argv[i]);
-    }
-    return commands;
-}
-
 Myvector<string> getLineNames(string rawLine)
 {
     string columnName;
@@ -151,12 +140,19 @@ string subString(string oldLine, int startIndex, int endIndex)
     return newLine;
 }
 
-Myvector<HASHtable<string>> readTableContent(string pathToTable)
+Myvector<HASHtable<string>> readTableContent(string tableName)
 {   
     Myvector<HASHtable<string>> fullTable;
     Myvector<string> columnNames;
     string firstLine;
-    fstream tableFile(pathToTable);
+    
+
+    fstream tableFile("Схема 1/" + tableName + "/"+"1.csv");
+    if(tableFile.bad())
+    {
+        cerr << "Wrong tablename!" << endl;
+        exit(-1);
+    }
     getline(tableFile,firstLine);
     columnNames = getLineNames(firstLine); // zapis column names po otdelnosti
     
@@ -168,21 +164,15 @@ Myvector<HASHtable<string>> readTableContent(string pathToTable)
         row.HSET(columnNames[i],columnNames[i]);
     }
     fullTable.MPUSH(row);
-    
-    
-    string dirPath = subString(pathToTable,0,pathToTable.size()-5);
-    string tableName = subString(dirPath, 13,dirPath.size()-1);
 
 
     string pkSeqContent;
-    fstream pkSeq(dirPath + tableName + "_pk_sequence");
+    fstream pkSeq("Схема 1/" + tableName+ "/" + tableName + "_pk_sequence");
     getline(pkSeq, pkSeqContent);
     pkSeq.close();
-
+    
     int amountOfLinesInTable = stoi(pkSeqContent);
     
-    
-   
     if (amountOfLinesInTable == 1)
     {
         return fullTable;
@@ -196,7 +186,7 @@ Myvector<HASHtable<string>> readTableContent(string pathToTable)
             getline(tableFile,firstLine);
 
             columnValues = getLineNames(firstLine);
-            columnValues.print();
+            
             for (int j = 0; j < columnValues.size(); j++)
             {
                 row.HSET(columnNames[j],columnValues[j]);
@@ -212,17 +202,32 @@ Myvector<HASHtable<string>> readTableContent(string pathToTable)
     return fullTable;
 }
 
-void insertIntoTable(Myvector<HASHtable<string>>& table, const string& path,
+void lockTable(const string& pathToDir)
+{
+    ofstream lockFile("Схема 1/" + pathToDir + "/" + pathToDir + "_lock");
+    lockFile << 1;
+    lockFile.close();
+}
+
+void unlockTable(const string& pathToDir)
+{
+    ofstream lockFile("Схема 1/" + pathToDir + "/" + pathToDir + "_lock");
+    if (lockFile.bad()) cerr << "error opening lock";
+    lockFile << 0;
+    lockFile.close();
+}
+
+void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
  const Myvector<string>& values)
 {
-
+    lockTable(pathToDir);
+    unlockTable(pathToDir);
 }
 
 
 void handleCommands(Myvector<string>& commandVector)
 {
-    commandVector.print();
-    cout << commandVector.size();
+    //commandVector.print();
     if (commandVector.size() == 0)
     {
         cerr << "Empty query for program!" << endl;
@@ -242,8 +247,23 @@ void handleCommands(Myvector<string>& commandVector)
     {
         commandVector.MDEL(0);
         commandVector.MDEL(0);
+
         cout << "INSERT INTO has been called!" << endl;
-        commandVector.print();
+        string tableName = commandVector[0];
+
+        commandVector.MDEL(0);
+
+        if (commandVector[0] != "VALUES")
+        {
+            cerr << "Wrong syntax for INSERT" << endl;
+            return;
+        }
+        
+        commandVector.MDEL(0);
+        
+        Myvector<HASHtable<string>> fullTable = readTableContent(tableName);
+        insertIntoTable(fullTable,tableName,commandVector);
+        cout << "ROFLOfsdfsfsdf";
     }
     else if (commandVector[0] == "DELETE" && commandVector[1] == "FROM")
     {
@@ -278,16 +298,15 @@ int main()
 {
     // Pomnit` pro probeli v .csv
 
-
     //checkDB();
     string input;
     getline(cin, input);
     Myvector<string> commandVector = handleUserInput(input);
     handleCommands(commandVector);
 
-    //  Myvector<HASHtable<string>> tablica1 = readTableContent("Схема 1/таблица1/1.csv");
-    //  cout << tablica1.size() << endl;
-    //  tablica1[0].print();
-
+    //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
+    //cout << tablica1.size() << endl;
+    //tablica1[0].print();
+    
     return 0;
 }
