@@ -248,13 +248,39 @@ void decreaseSequence(const string& pathToDir)
 }
 
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
- const Myvector<string>& values, const Myvector<string>& columnNames)
+Myvector<string>& values, Myvector<string>& columnNames)
 {
     lockTable(pathToDir);
 
     int tableWidth = columnNames.size();
+    HASHtable<string> loadline;
+    if (tableWidth == values.size())
+    {
+        for (int i = 0; i < tableWidth; i++)
+        {
+            loadline.HSET(columnNames[i], values[i]);
+        }
+        table.MPUSH(loadline);
+        increaseSequence(pathToDir);
+    }
+    else if (tableWidth > values.size())
+    {
+        for (int i = 0; i < values.size(); i++) // zapolnenie znacheniem
+        {
+            loadline.HSET(columnNames[i], values[i]);
+        }
+        for (int i = values.size(); i < tableWidth; i++)
+        {
+            loadline.HSET(columnNames[i], "EMPTY_CELL");
+        }
+        table.MPUSH(loadline);
+        increaseSequence(pathToDir);
+    }
+    else if (tableWidth < values.size())
+    {
 
-
+    }
+    
 
 
     unlockTable(pathToDir);
@@ -340,8 +366,8 @@ int main()
     // Myvector<string> commandVector = handleUserInput(input);
     // handleCommands(commandVector);
 
+    //INCREASE and DECREASE!!!!!
 
-    decreaseSequence("таблица1");
 
     //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
     //cout << tablica1.size() << endl;
