@@ -118,19 +118,11 @@ Myvector<string> readInput(int argc, char** argv)
     Myvector<string> commands;
     for (int i = 0; i < argc; i++ )
     {
+        //if (argv[i] == "(" || argv[i] == ")" || argv[i] == "'" || argv[i] == ")") continue;
         commands.MPUSH(argv[i]);
     }
     return commands;
 }
-
-// Myvector<HASHtable<string>> readTableContent(string pathToTable)
-// {   
-//     Myvector<string> columnNames;
-//     string firstLine;
-//     getline(cin,firstLine);
-//     cout << firstLine;
-//     return ;
-// }
 
 Myvector<string> getLineNames(string rawLine)
 {
@@ -220,10 +212,18 @@ Myvector<HASHtable<string>> readTableContent(string pathToTable)
     return fullTable;
 }
 
+void insertIntoTable(Myvector<HASHtable<string>>& table, const string& path,
+ const Myvector<string>& values)
+{
+
+}
+
 
 void handleCommands(Myvector<string>& commandVector)
 {
     commandVector.MDEL(0);
+    commandVector.print();
+    cout << commandVector.size();
     if (commandVector.size() == 0)
     {
         cerr << "Empty query for program!" << endl;
@@ -255,20 +255,53 @@ void handleCommands(Myvector<string>& commandVector)
     }
 }
 
+Myvector<string> handleUserInput(const string& input)
+{
+    string command = "";
+    Myvector<string> commandArray;
+    
+    for (int i = 0; i < input.size(); i++)
+    {
+        command += input[i];
+        if (input[i] == ' ') 
+        {
+            commandArray.MPUSH(command);
+            command = "";
+        }
+        else if (input[i] == '\'' || input[i] == ',' || input[i] == '(' || input[i] == ')') 
+        {
+            if(command.size() != 0)
+            {
+                commandArray.MPUSH(command);
+                command = "";
+            } 
+            
+            //command = "";
+            continue;
+        }
+        
+    }
 
 
-int main(int argc, char** argv)
+    return commandArray;
+}
+
+int main()
 {
     // Pomnit` pro probeli v .csv
 
 
     //checkDB();
+    string input;
+    getline(cin, input);
+    Myvector<string> commandVector = handleUserInput(input);
+    commandVector.print();
     //Myvector<string> commandVector = readInput(argc, argv);
     //handleCommands(commandVector);
 
-    // Myvector<HASHtable<string>>tablica1 = readTableContent("Схема 1/таблица1/1.csv");
-    // cout << tablica1.size() << endl;
-    // tablica1[1].print();
+    //  Myvector<HASHtable<string>> tablica1 = readTableContent("Схема 1/таблица1/1.csv");
+    //  cout << tablica1.size() << endl;
+    //  tablica1[0].print();
 
     return 0;
 }
