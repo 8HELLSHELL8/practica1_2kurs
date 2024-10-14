@@ -98,79 +98,86 @@ template<typename T>
 struct HASHtable
 {
 private:
-   uint32_t capacity;
-   Hbuckets<T>* arr;
+    uint32_t capacity;
+    Hbuckets<T>* arr;
+    uint32_t currentSize;
 
-   uint32_t currentSize;
-
-   uint32_t hash(const std::string& value)
-   {
-       uint32_t hash = 5381;
-       for (char c : value)
-       {
-           hash = ((hash << 5) + hash) + c;
-       }
-       return hash % capacity;
-   }
+    uint32_t hash(const std::string& value)
+    {
+        uint32_t hash = 5381;
+        for (char c : value)
+        {
+            hash = ((hash << 5) + hash) + c;
+        }
+        return hash % capacity;
+    }
 
 public:
   
-   HASHtable()
-   {
-       arr = new Hbuckets<T>[20];  
-       capacity = 20;
-       currentSize = 0;
-   }
+    HASHtable()
+    {
+        arr = new Hbuckets<T>[20];  
+        capacity = 20;
+        currentSize = 0;
+    }
 
-   HASHtable(int capacityValue)
-   {
-       arr = new Hbuckets<T>[capacityValue];  // Âûäåëÿåì ìàññèâ áàêåòîâ
-       capacity = capacityValue;
-       currentSize = 0;
-   }
+    HASHtable(int capacityValue)
+    {
+        arr = new Hbuckets<T>[capacityValue];  // Выделяем массив бакетов
+        capacity = capacityValue;
+        currentSize = 0;
+    }
    
-   // Ìåòîä âñòàâêè ýëåìåíòà
-   void HSET(const std::string& key, const T& value)
-   {
-       uint32_t index = hash(key);  // Ïîëó÷àåì èíäåêñ
-       arr[index].push_back(key, value);  // Äîáàâëÿåì ýëåìåíò â ñîîòâåòñòâóþùèé áàêåò
-       currentSize += 1;
-   }
+    // Метод добавления элемента
+    void HSET(const std::string& key, const T& value)
+    {
+        uint32_t index = hash(key);  // Получаем индекс
+        try {
+            // Пытаемся получить текущее значение по ключу
+            T currentValue = arr[index].get(key);
+            // Если значение существует, перезаписываем его
+            arr[index].remove(key);  // Удаляем старое значение
+            arr[index].push_back(key, value);  // Добавляем новое значение
+        } catch (const std::runtime_error&) {
+            // Если значение не найдено, просто добавляем новый элемент
+            arr[index].push_back(key, value);
+            currentSize += 1;  // Увеличиваем размер хэш-таблицы
+        }
+    }
 
-   // Ìåòîä ïîëó÷åíèÿ ýëåìåíòà ïî êëþ÷ó
-   T HGET(const std::string& key)
-   {
-       uint32_t index = hash(key);  // Ïîëó÷àåì èíäåêñ
-       return arr[index].get(key);  // Èùåì ýëåìåíò â ñîîòâåòñòâóþùåì áàêåòå
-   }
+    // Метод получения значения по ключу
+    T HGET(const std::string& key)
+    {
+        uint32_t index = hash(key);  // Получаем индекс
+        return arr[index].get(key);  // Возвращаем значение
+    }
 
-   
-   void HDEL(const std::string& key)
-   {
-       uint32_t index = hash(key);  // Ïîëó÷àåì èíäåêñ
-       arr[index].remove(key);  // Óäàëÿåì ýëåìåíò èç ñîîòâåòñòâóþùåãî áàêåòà
-       currentSize -= 1;
-   }
+    void HDEL(const std::string& key)
+    {
+        uint32_t index = hash(key);  // Получаем индекс
+        arr[index].remove(key);  // Удаляем элемент
+        currentSize -= 1;  // Уменьшаем размер хэш-таблицы
+    }
 
-   uint32_t size()
-   {
-    return currentSize;
-   }
+    uint32_t size()
+    {
+        return currentSize;
+    }
 
-   // Ïå÷àòü âñåõ áàêåòîâ
-   void print()
-   {
-       for (uint32_t i = 0; i < capacity; ++i)
-       {
-           std::cout << "Bucket " << i << ": ";
-           arr[i].print();
-           std::cout << std::endl;
-       }
-   }
+    // Печатаем все элементы
+    void print()
+    {
+        for (uint32_t i = 0; i < capacity; ++i)
+        {
+            std::cout << "Bucket " << i << ": ";
+            arr[i].print();
+            std::cout << std::endl;
+        }
+    }
 
-
-//    ~HASHtable()
-//    {
-//        delete[] arr;
-//    }
+    // Деструктор
+    // ~HASHtable()
+    // {
+    //     delete[] arr;
+    // }
 };
