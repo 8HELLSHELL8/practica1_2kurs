@@ -4,6 +4,7 @@
 #include <sstream>
 #include "cjson/cJSON.h"
 #include "MyVector.h"
+#include <cstdio>
 #include "HashTable.h"
 using namespace std;
 
@@ -247,82 +248,56 @@ void decreaseSequence(const string& pathToDir)
     
 }
 
-void createNewCSV()
-{
 
+bool isFileEmpty(const std::string& filePath) {
+    std::ifstream file(filePath, std::ios::ate);  // ios::ate открывает файл в конце
+    return file.tellg() == 0;  // Если позиция указателя 0, значит файл пустой
 }
 
-void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToDir, Myvector<string>& columnNames)
-{   
-    string pk_seqInput;
-    ifstream pk_seq("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
-    getline(pk_seq, pk_seqInput);
-    int amountOfLines = stoi(pk_seqInput);
-    pk_seq.close();
-    string currentTable = "1.csv";
-   
-
-    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable);
-    if (tableFile.bad())
-    {
-        cerr << "Error writing out tablefile" << endl;
-        return;
-    } 
-
-    cout << amountOfLines << endl;
-
-    for (int i = 0 ; i < amountOfLines; i++)
-    {
-        for (int j = 0; j < columnNames.size(); j++)
-        {
-            tableFile << table[i].HGET(columnNames[j]) << " ";
-        }
-        tableFile << '\n';
-    }
-    tableFile.close();
-}
-
-void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
-Myvector<string>& values, Myvector<string>& columnNames)
+void writeOutTableFile(Myvector<HASHtable<std::string>>& table, 
+                       const std::string& pathToDir, 
+                       Myvector<std::string>& columnNames)
 {
-     // Чтение файла последовательности (sequence)
-    string pk_seqInput;
-    ifstream pk_seq("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    // Пути к файлам
+    std::string sequencePath = "Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence";
+    std::string tablePath = "Схема 1/" + pathToDir + "/1.csv";
 
+    // Чтение количества строк из sequence-файла
+    std::string pk_seqInput;
+    std::ifstream pk_seq(sequencePath);
     if (!pk_seq.is_open()) {
-        cerr << "Error: Could not open sequence file." << endl;
+        std::cerr << "Error: Could not open sequence file." << std::endl;
         return;
     }
-
-    getline(pk_seq, pk_seqInput);
-    int amountOfLines = stoi(pk_seqInput);
+    std::getline(pk_seq, pk_seqInput);
+    int amountOfLines = std::stoi(pk_seqInput);
     pk_seq.close();
 
-    // Открываем файл в режиме перезаписи (очистка перед записью)
-    string currentTable = "1.csv";
-    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable, std::ios::out | std::ios::trunc);
-
+    // Открываем CSV файл в режиме добавления (или создаем новый с очисткой)
+    std::ofstream tableFile(tablePath, std::ios::out | std::ios::trunc);
     if (!tableFile.is_open()) {
-        cerr << "Error: Could not write to table file." << endl;
+        std::cerr << "Error: Could not open or create table file." << std::endl;
         return;
     }
 
-    // --- Запись заголовков ---
-    for (int j = 0; j < columnNames.size(); j++) {
-        tableFile << columnNames[j];
-        if (j < columnNames.size() - 1) {
-            tableFile << " "; 
+    // --- Записываем заголовки только один раз (если файл пустой) ---
+    if (isFileEmpty(tablePath)) {
+        for (size_t j = 0; j < columnNames.size(); ++j) {
+            tableFile << columnNames[j];
+            if (j < columnNames.size() - 1) {
+                tableFile << " ";  // Запятая между заголовками
+            }
         }
+        tableFile << " ";
+        tableFile << '\n';  // Переход на новую строку после заголовков
     }
-    tableFile << " ";
-    tableFile << '\n';  // Переход на новую строку после заголовков
 
-    // --- Запись строк данных ---
-    for (int i = 0; i < amountOfLines && i < table.size(); i++) {
-        for (int j = 0; j < columnNames.size(); j++) {
+    // --- Записываем строки данных ---
+    for (int i = 1; i < table.size(); ++i) {
+        for (size_t j = 0; j < columnNames.size(); ++j) {
             tableFile << table[i].HGET(columnNames[j]);
             if (j < columnNames.size() - 1) {
-                tableFile << " ";  
+                tableFile << " ";  // Запятая между значениями
             }
         }
         tableFile << " ";
@@ -330,7 +305,66 @@ Myvector<string>& values, Myvector<string>& columnNames)
     }
 
     tableFile.close();  // Закрываем файл
+
+    // Обновляем sequence-файл с новым количеством строк
+    std::ofstream pk_seq_out(sequencePath, std::ios::out | std::ios::trunc);
+    if (pk_seq_out.is_open()) {
+        pk_seq_out << table.size();  // Обновляем количество строк
+        pk_seq_out.close();
+    }
 }
+
+void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
+                     Myvector<string>& values, Myvector<string>& columnNames)
+{
+    lockTable(pathToDir);  // Блокируем таблицу
+
+    int tableWidth = columnNames.size();
+    HASHtable<string> loadline;
+
+    if (tableWidth == values.size()) {
+        // Равное количество колонок и значений
+        for (int i = 0; i < tableWidth; i++) {
+            loadline.HSET(columnNames[i], values[i]);
+        }
+        table.MPUSH(loadline);  // Добавляем строку в таблицу
+    } 
+    else if (tableWidth > values.size()) {
+        // Больше колонок, чем значений — заполняем пустыми ячейками
+        for (int i = 0; i < values.size(); i++) {
+            loadline.HSET(columnNames[i], values[i]);
+        }
+        for (int i = values.size(); i < tableWidth; i++) {
+            loadline.HSET(columnNames[i], "EMPTY_CELL");
+        }
+        table.MPUSH(loadline);
+    } 
+    else {
+        // Больше значений, чем колонок — разделяем на несколько строк
+        int index = 0;
+        while (index < values.size()) {
+            loadline = {};  // Начинаем новую строку
+
+            for (int i = 0; i < tableWidth && index < values.size(); i++, index++) {
+                loadline.HSET(columnNames[i], values[index]);
+            }
+
+            // Если строка неполная, заполняем оставшиеся ячейки
+            for (int i = loadline.size(); i < tableWidth; i++) {
+                loadline.HSET(columnNames[i], "EMPTY_CELL");
+            }
+
+            table.MPUSH(loadline);  // Добавляем строку в таблицу
+        }
+    }
+
+    // Увеличиваем счетчик строк и записываем таблицу в файл
+    increaseSequence(pathToDir);
+    writeOutTableFile(table, pathToDir, columnNames);
+
+    unlockTable(pathToDir);  // Разблокируем таблицу
+}
+
 
 
 void handleCommands(Myvector<string>& commandVector)
@@ -413,6 +447,8 @@ int main()
     handleCommands(commandVector);
 
     //INCREASE and DECREASE!!!!!
+
+    
 
     //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
     //cout << tablica1.size() << endl;
