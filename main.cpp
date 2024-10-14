@@ -457,7 +457,7 @@ bool checkCondition(Myvector<std::string> conditionArray, HASHtable<std::string>
     if (conditionArray.size() == 0) {
         return false; // Если массив пуст, возвращаем false
     }
-    
+    conditionArray.MDEL(0);
     bool totalFlag = true; // Изначально предполагаем, что выражение истинно
     bool currentCondition = true; // Состояние текущего условия
 
