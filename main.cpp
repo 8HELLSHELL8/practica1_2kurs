@@ -278,7 +278,24 @@ Myvector<string>& values, Myvector<string>& columnNames)
     }
     else if (tableWidth < values.size())
     {
+        HASHtable<string> loadline;
+        while (int index = 0 < values.size())
+        {
+            
 
+            if((index+1) % tableWidth == 0)
+            {
+                loadline.HSET(tableWidth[], values[index]);
+            }   
+            loadline = {};
+
+
+
+
+
+
+            index++;
+        }
     }
     
 
