@@ -466,9 +466,47 @@ Myvector<string> handleCondition(string condition)
     return elements;
 }
 
-bool checkCondition()
+bool checkCondition(Myvector<string> conditionArray,HASHtable<string>& line)
 {
-    
+    conditionArray.MDEL(0);
+    bool isCorrect = true;
+
+    bool totalFlag = false;
+    for (int i = 0; i < conditionArray.size(); i++)
+    {
+        if (line.HGET(conditionArray[0]) != conditionArray[2])
+        {
+            isCorrect = false;
+            totalFlag += false;
+            conditionArray.MDEL(0);
+            conditionArray.MDEL(0);
+            conditionArray.MDEL(0);
+        }
+        else if (conditionArray[0] == "OR")
+        {   
+            bool prevState = isCorrect;
+            isCorrect = true;
+            if ((conditionArray[0]) != conditionArray[2])
+            {
+                isCorrect = false;
+                totalFlag = isCorrect+ prevState;
+                conditionArray.MDEL(0);
+                conditionArray.MDEL(0);
+                conditionArray.MDEL(0);
+            }
+
+        }
+        else if (conditionArray[0] == "AND")
+        {
+            if (isCorrect == false) totalFlag += false;
+            if ((conditionArray[0]) == conditionArray[2]) 
+                conditionArray.MDEL(0);
+                conditionArray.MDEL(0);
+                conditionArray.MDEL(0);
+            
+        }
+    }
+    return totalFlag;
 }
 
 void deleteFromTable(string tableName, string condition)
