@@ -1,61 +1,47 @@
-void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
-                     Myvector<string>& values, Myvector<string>& columnNames)
+void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToDir, 
+                       Myvector<string>& columnNames)
 {
-    lockTable(pathToDir);
-
-    int tableWidth = columnNames.size();
-    HASHtable<string> loadline;
-
-    if (tableWidth == values.size())
-    {
-        // Case 1: Equal size between column names and values
-        for (int i = 0; i < tableWidth; i++)
-        {
-            loadline.HSET(columnNames[i], values[i]);
-        }
-        table.MPUSH(loadline);
-        increaseSequence(pathToDir);
+    // Read the sequence file to determine the number of lines to write
+    string pk_seqInput;
+    ifstream pk_seq("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    
+    if (!pk_seq.is_open()) {
+        cerr << "Error: Could not open sequence file." << endl;
+        return;
     }
-    else if (tableWidth > values.size())
-    {
-        // Case 2: More columns than values, fill remaining with "EMPTY_CELL"
-        for (int i = 0; i < values.size(); i++)
-        {
-            loadline.HSET(columnNames[i], values[i]);
-        }
-        for (int i = values.size(); i < tableWidth; i++)
-        {
-            loadline.HSET(columnNames[i], "EMPTY_CELL");
-        }
-        table.MPUSH(loadline);
-        increaseSequence(pathToDir);
-    }
-    else if (tableWidth < values.size())
-    {
-        // Case 3: More values than columns, split across multiple rows
-        int index = 0;
-        while (index < values.size())
-        {
-            loadline.clear();  // Start a new row
 
-            for (int i = 0; i < tableWidth && index < values.size(); i++, index++)
-            {
-                loadline.HSET(columnNames[i], values[index]);
+    getline(pk_seq, pk_seqInput);
+    int amountOfLines = stoi(pk_seqInput);
+    pk_seq.close();
+
+    // Prepare the output CSV file
+    string currentTable = "1.csv";
+    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable);
+
+    if (!tableFile.is_open()) {
+        cerr << "Error: Could not write to table file." << endl;
+        return;
+    }
+
+    // Write the column headers first
+    for (int j = 0; j < columnNames.size(); j++) {
+        tableFile << columnNames[j];
+        if (j < columnNames.size() - 1) {
+            tableFile << ",";  // Add commas between headers
+        }
+    }
+    tableFile << '\n';  // New line after headers
+
+    // Write the table content row by row
+    for (int i = 0; i < amountOfLines && i < table.size(); i++) {
+        for (int j = 0; j < columnNames.size(); j++) {
+            tableFile << table[i].HGET(columnNames[j]);
+            if (j < columnNames.size() - 1) {
+                tableFile << ",";  // Add commas between values
             }
-
-            // If this row is incomplete, fill remaining columns with "EMPTY_CELL"
-            for (int i = loadline.size(); i < tableWidth; i++)
-            {
-                loadline.HSET(columnNames[i], "EMPTY_CELL");
-            }
-
-            table.MPUSH(loadline);  // Push the row to the table
-            increaseSequence(pathToDir);
         }
+        tableFile << '\n';  // New line after each row
     }
 
-    // Write the table data to file
-    writeOutTableFile(table, pathToDir, columnNames);
-
-    unlockTable(pathToDir);
+    tableFile.close();
 }
