@@ -466,44 +466,44 @@ Myvector<string> handleCondition(string condition)
     return elements;
 }
 
-bool checkCondition(Myvector<string> conditionArray,HASHtable<string>& line)
-{
-    conditionArray.MDEL(0);
-    bool isCorrect = true;
+bool checkCondition(Myvector<std::string> conditionArray, HASHtable<std::string>& line) {
+    if (conditionArray.size() == 0) {
+        return false; // Если массив пуст, возвращаем false
+    }
+    
+    bool totalFlag = true; // Изначально предполагаем, что выражение истинно
+    bool currentCondition = true; // Состояние текущего условия
 
-    bool totalFlag = false;
-    for (int i = 0; i < conditionArray.size(); i++)
-    {
-        if (line.HGET(conditionArray[0]) != conditionArray[2])
-        {
-            isCorrect = false;
-            totalFlag += false;
-            conditionArray.MDEL(0);
-            conditionArray.MDEL(0);
-            conditionArray.MDEL(0);
-        }
-        else if (conditionArray[0] == "OR")
-        {   
-            bool prevState = isCorrect;
-            isCorrect = true;
-            if ((conditionArray[0]) != conditionArray[2])
-            {
-                isCorrect = false;
-                totalFlag = isCorrect+ prevState;
-                conditionArray.MDEL(0);
-                conditionArray.MDEL(0);
-                conditionArray.MDEL(0);
+    for (size_t i = 0; i < conditionArray.size() - 2 ; i++) {
+        const std::string& token = conditionArray[i];
+
+        if (token == "AND") {
+            // Проверяем следующее условие
+            if (i + 1 < conditionArray.size()) {
+                const std::string& nextColumn = conditionArray[i + 1];
+                const std::string& nextValue = conditionArray[i + 2];
+
+                currentCondition = (line.HGET(nextColumn) == nextValue);
+                totalFlag = totalFlag && currentCondition; // Обновляем флаг для AND
             }
+            i += 2; // Пропускаем обработанные значения
+        } else if (token == "OR") {
+            // Проверяем следующее условие
+            if (i + 1 < conditionArray.size()) {
+                const std::string& nextColumn = conditionArray[i + 1];
+                const std::string& nextValue = conditionArray[i + 2];
 
-        }
-        else if (conditionArray[0] == "AND")
-        {
-            if (isCorrect == false) totalFlag += false;
-            if ((conditionArray[0]) == conditionArray[2]) 
-                conditionArray.MDEL(0);
-                conditionArray.MDEL(0);
-                conditionArray.MDEL(0);
-            
+                currentCondition = (line.HGET(nextColumn) == nextValue);
+                totalFlag = totalFlag || currentCondition; // Обновляем флаг для OR
+            }
+            i += 2; // Пропускаем обработанные значения
+        } else {
+            // Это обычное условие, проверяем его
+            const std::string& column = token;
+            const std::string& value = conditionArray[i + 2];
+            currentCondition = (line.HGET(column) == value);
+            totalFlag = totalFlag && currentCondition; // Обновляем общий флаг
+            i += 2; // Пропускаем проверенное условие
         }
     }
     return totalFlag;
@@ -515,9 +515,17 @@ void deleteFromTable(string tableName, string condition)
     Myvector<string> columnNames;
     Myvector<string> conditionArray = handleCondition(condition);
     conditionArray.print();
+   conditionArray.MDEL(0);
     Myvector<HASHtable<std::string>> table = readTableContent(tableName, columnNames);
-
-
+    for (int i = 0; i < table.size(); i++)
+    {
+        if (checkCondition(conditionArray, table[i]))
+        {   
+            table[i].HSET(conditionArray[0],"EMPTY_CELL");
+            table[i].print();
+        }
+    }
+    writeOutTableFile(table,tableName,columnNames);
     unlockTable(tableName);
 }
 
