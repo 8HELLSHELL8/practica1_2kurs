@@ -421,6 +421,49 @@ void selectColumns(std::string tableNameFirst, std::string firstValue,
     }
 }
 
+Myvector<string> handleCondition(string condition)
+{
+    Myvector<string> elements;
+    string word = "";
+    for (int i = 0; i < condition.size(); i++)
+    {
+        if (condition[i] != '.' || condition[i] != ' ' || condition[i] != '\'')
+        {
+            word += condition[i];
+        }
+        if (condition[i] == '=')
+        {
+            elements.MPUSH(word);
+            elements.MPUSH("=");
+            word = "";
+        }
+        else
+        {
+            elements.MPUSH(word);
+            word = "";
+        }
+    }
+    return elements;
+}
+
+bool checkCondition()
+{   
+    return false;
+    return true;
+}
+
+void deleteFromTable(string tableName, string condition)
+{
+    lockTable(tableName);
+    Myvector<string> columnNames;
+    Myvector<string> conditionArray = handleCondition(condition);
+    conditionArray.print();
+    Myvector<HASHtable<std::string>> table = readTableContent(tableName, columnNames);
+
+
+    unlockTable(tableName);
+}
+
 void handleCommands(Myvector<string>& commandVector)
 {
     //commandVector.print();
@@ -473,7 +516,11 @@ void handleCommands(Myvector<string>& commandVector)
         commandVector.MDEL(0);
         commandVector.MDEL(0);
         cout << "DELETE FROM has been called!" << endl;
+        string tableName = commandVector[0];
+        commandVector.MDEL(0);
+        commandVector.MDEL(0);
         commandVector.print();
+        deleteFromTable(tableName, commandVector[0]);
         
     }
 }
@@ -481,25 +528,56 @@ void handleCommands(Myvector<string>& commandVector)
 Myvector<string> handleUserInput(const string& input)
 {
     string command = "";
+    string conditions = "";  // Переменная для хранения всего, что идёт после WHERE
     Myvector<string> commandArray;
-    
+    bool isWhereClause = false;  // Флаг для определения секции WHERE
+
     for (int i = 0; i < input.size(); i++)
     {
-        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')' || input[i]=='.' || input[i]=='=')
+        // Если встречаем WHERE, всё, что идёт после, должно быть одним элементом
+        if (!isWhereClause && i + 5 <= input.size() && input.substr(i, 5) == "WHERE")
         {
             if (command.size() != 0) commandArray.MPUSH(command);
+            commandArray.MPUSH("WHERE");  // Добавляем ключевое слово WHERE
             command = "";
+            i += 5;  // Пропускаем слово WHERE
+            isWhereClause = true;  // Активируем флаг секции WHERE
+            continue;
+        }
+
+        if (isWhereClause)
+        {
+            // Всё, что идёт после WHERE, добавляем как одно целое в переменную conditions
+            conditions += input[i];
         }
         else
         {
-            command += input[i];
+            // До WHERE обрабатываем, разделяя по символам-разделителям
+            if (input[i] == ' ' || input[i] == '\'' || input[i] == ',' || 
+                input[i] == '(' || input[i] == ')' || input[i] == '.' || input[i] == '=')
+            {
+                if (command.size() != 0) commandArray.MPUSH(command);
+                command = "";
+            }
+            else
+            {
+                command += input[i];
+            }
         }
     }
+
+    // Добавляем последнее значение в массив, если оно не пустое
+    if (command.size() != 0 && !isWhereClause) commandArray.MPUSH(command);
+
+    // Добавляем всю секцию WHERE в массив команд как одно целое
+    if (!conditions.empty()) commandArray.MPUSH(conditions);
+
     return commandArray;
 }
 
 int main()
 {
+    setlocale(LC_ALL, "RU");
     // Pomnit` pro probeli v .csv
 
     //checkDB();
