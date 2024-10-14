@@ -273,7 +273,7 @@ void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToD
 
     for (int i = 0 ; i < amountOfLines; i++)
     {
-        for (int j = 0; i < columnNames.size(); j++)
+        for (int j = 0; j < columnNames.size(); j++)
         {
             tableFile << table[i].HGET(columnNames[j]) << " ";
         }
@@ -300,7 +300,7 @@ Myvector<string>& values, Myvector<string>& columnNames)
 
     // Открываем файл в режиме перезаписи (очистка перед записью)
     string currentTable = "1.csv";
-    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable);
+    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable, std::ios::out | std::ios::trunc);
 
     if (!tableFile.is_open()) {
         cerr << "Error: Could not write to table file." << endl;
