@@ -254,6 +254,39 @@ bool isFileEmpty(const std::string& filePath) {
     return file.tellg() == 0;  // Если позиция указателя 0, значит файл пустой
 }
 
+// Функция для разбора условий из WHERE и разделения их на отдельные части
+struct Condition {
+    std::string column;
+    std::string value;
+    std::string logic; // AND/OR (может быть пустым для первого условия)
+};
+
+Myvector<Condition> parseConditions(const std::string& whereClause) {
+    Myvector<Condition> conditions;
+    std::stringstream ss(whereClause);
+    std::string token;
+    
+    Condition condition;
+    while (ss >> token) {
+        if (token == "AND" || token == "OR") {
+            condition.logic = token;
+        } else if (token.find('=') != std::string::npos) {
+            size_t pos = token.find('=');
+            condition.column = token.substr(0, pos);
+            condition.value = token.substr(pos + 1);
+            conditions.MPUSH(condition);
+            condition = {};  // Сбрасываем для следующего условия
+        }
+    }
+    
+    return conditions;
+}
+
+// Функция для проверки условия на строке таблицы
+bool checkCondition(HASHtable<std::string>& row, const Condition& condition) {
+    return row.HGET(condition.column) == condition.value;
+}
+
 void writeOutTableFile(Myvector<HASHtable<std::string>>& table, 
                        const std::string& pathToDir, 
                        Myvector<std::string>& columnNames)
@@ -312,6 +345,51 @@ void writeOutTableFile(Myvector<HASHtable<std::string>>& table,
         pk_seq_out << table.size();  // Обновляем количество строк
         pk_seq_out.close();
     }
+}
+
+// Основная функция удаления элементов из таблицы
+void deleteFromTable(std::string tableName, std::string whereClause) {
+    
+    lockTable(tableName);
+    // Разбираем WHERE условие
+    Myvector<Condition> conditions = parseConditions(whereClause);
+    conditions.print();
+    // Читаем содержимое таблицы
+    Myvector<std::string> columnNames;
+    Myvector<HASHtable<std::string>> tableContent = readTableContent(tableName, columnNames);
+
+    // Новая таблица без удаленных строк
+    Myvector<HASHtable<std::string>> newTable;
+
+    // Проход по строкам таблицы и проверка условий
+    for (int i = 0; i < tableContent.size(); i++) {
+        HASHtable<std::string> row = tableContent[i];
+        bool deleteRow = false;
+
+        for (int j = 0; j < conditions.size(); j++) {
+            bool result = checkCondition(row, conditions[j]);
+
+            // Логика обработки AND и OR
+            if (conditions[j].logic == "AND" && !result) {
+                deleteRow = false;
+                break;  // Если AND, и условие не выполняется — выходим
+            } else if (conditions[j].logic == "OR" && result) {
+                deleteRow = true;
+                break;  // Если OR, и условие выполняется — можно удалять
+            } else if (conditions[j].logic.empty()) {
+                deleteRow = result;  // Первое условие
+            }
+        }
+
+        if (!deleteRow) {
+            newTable.MPUSH(row);  // Оставляем строку, если она не подлежит удалению
+        }
+    }
+
+    // Перезаписываем таблицу с новыми данными
+    writeOutTableFile(newTable, tableName, columnNames);
+
+    unlockTable(tableName);
 }
 
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
@@ -423,7 +501,7 @@ void selectColumns(std::string tableNameFirst, std::string firstValue,
 
 void handleCommands(Myvector<string>& commandVector)
 {
-    //commandVector.print();
+    commandVector.print();
     if (commandVector.size() == 0)
     {
         cerr << "Empty query for program!" << endl;
@@ -474,6 +552,16 @@ void handleCommands(Myvector<string>& commandVector)
         commandVector.MDEL(0);
         cout << "DELETE FROM has been called!" << endl;
         commandVector.print();
+        string tableName = commandVector[0];
+        commandVector.MDEL(0);
+        if (commandVector[0] != "WHERE")
+        {
+            cerr << "Syntax error in where condition!" << endl;
+            return;
+        }
+        commandVector.MDEL(0);
+        deleteFromTable(tableName,commandVector[0]);
+        
         
     }
 }
@@ -482,19 +570,45 @@ Myvector<string> handleUserInput(const string& input)
 {
     string command = "";
     Myvector<string> commandArray;
-    
+    bool isWhereClause = false;  // Флаг, указывающий, что мы находимся в секции WHERE
+
     for (int i = 0; i < input.size(); i++)
     {
-        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')' || input[i]=='.' || input[i]=='=')
+        // Если встречаем WHERE, всё, что идёт после, должно быть одним элементом
+        if (!isWhereClause && i + 5 <= input.size() && input.substr(i, 5) == "WHERE")
         {
             if (command.size() != 0) commandArray.MPUSH(command);
+            commandArray.MPUSH("WHERE");  // Добавляем ключевое слово WHERE
             command = "";
+            i += 4;  // Пропускаем слово WHERE
+            isWhereClause = true;  // Активируем флаг секции WHERE
+            continue;
+        }
+
+        if (isWhereClause)
+        {
+            // Всё, что идёт после WHERE, добавляем как одно целое
+            command += input[i];
         }
         else
         {
-            command += input[i];
+            // До WHERE обрабатываем как раньше, разделяя по символам-разделителям
+            if (input[i] == ' ' || input[i] == '\'' || input[i] == ',' || 
+                input[i] == '(' || input[i] == ')' || input[i] == '.' || input[i] == '=')
+            {
+                if (command.size() != 0) commandArray.MPUSH(command);
+                command = "";
+            }
+            else
+            {
+                command += input[i];
+            }
         }
     }
+
+    // Добавляем последнее значение в массив, если оно не пустое
+    if (command.size() != 0) commandArray.MPUSH(command);
+
     return commandArray;
 }
 
