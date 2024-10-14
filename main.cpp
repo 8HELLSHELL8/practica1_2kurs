@@ -273,7 +273,7 @@ void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToD
 
     for (int i = 0 ; i < amountOfLines; i++)
     {
-        for (int j = 0; i < columnNames.size(); i++)
+        for (int j = 0; i < columnNames.size(); j++)
         {
             tableFile << table[i].HGET(columnNames[j]) << " ";
         }
@@ -318,10 +318,11 @@ Myvector<string>& values, Myvector<string>& columnNames)
         while (index < values.size())
         {
             
-            int tabNameIndex = tableWidth - ((index+1) % tableWidth) - 1;
+            int tabNameIndex = (index+1 % tableWidth) - 1;
+            if (tabNameIndex == -1) tabNameIndex = tableWidth-1;
             if((index+1) % tableWidth == 0)
             {
-                
+                tabNameIndex = tableWidth - 1;
                 loadline.HSET(columnNames[tabNameIndex], values[index]);
                 table.MPUSH(loadline);
                 increaseSequence(pathToDir);
@@ -424,13 +425,12 @@ int main()
     // Pomnit` pro probeli v .csv
 
     //checkDB();
-     string input;
+    string input;
     getline(cin, input);
     Myvector<string> commandVector = handleUserInput(input);
     handleCommands(commandVector);
 
     //INCREASE and DECREASE!!!!!
-
 
     //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
     //cout << tablica1.size() << endl;
