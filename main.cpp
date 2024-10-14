@@ -247,6 +247,41 @@ void decreaseSequence(const string& pathToDir)
     
 }
 
+void createNewCSV()
+{
+
+}
+
+void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToDir, Myvector<string>& columnNames)
+{   
+    string pk_seqInput;
+    ifstream pk_seq("Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence");
+    getline(pk_seq, pk_seqInput);
+    int amountOfLines = stoi(pk_seqInput);
+    pk_seq.close();
+    string currentTable = "1.csv";
+   
+
+    ofstream tableFile("Схема 1/" + pathToDir + "/" + currentTable);
+    if (tableFile.bad())
+    {
+        cerr << "Error writing out tablefile" << endl;
+        return;
+    } 
+
+    cout << amountOfLines << endl;
+
+    for (int i = 0 ; i < amountOfLines; i++)
+    {
+        for (int j = 0; i < columnNames.size(); i++)
+        {
+            tableFile << table[i].HGET(columnNames[j]) << " ";
+        }
+        tableFile << '\n';
+    }
+    tableFile.close();
+}
+
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
 Myvector<string>& values, Myvector<string>& columnNames)
 {
@@ -279,26 +314,37 @@ Myvector<string>& values, Myvector<string>& columnNames)
     else if (tableWidth < values.size())
     {
         HASHtable<string> loadline;
-        while (int index = 0 < values.size())
+        int index = 0;
+        while (index < values.size())
         {
             
-
+            int tabNameIndex = tableWidth - ((index+1) % tableWidth) - 1;
             if((index+1) % tableWidth == 0)
             {
-                loadline.HSET(tableWidth[], values[index]);
+                
+                loadline.HSET(columnNames[tabNameIndex], values[index]);
+                table.MPUSH(loadline);
+                increaseSequence(pathToDir);
+                loadline = {};
             }   
-            loadline = {};
-
-
-
-
-
-
+            else
+            {
+                loadline.HSET(columnNames[tabNameIndex], values[index]);
+            }
             index++;
+        }
+        if (loadline.size() != 0)
+        {
+            for (int i = loadline.size(); i < tableWidth; i++)
+            {
+                loadline.HSET(columnNames[i],"EMPTY_CELL");
+            }
+            table.MPUSH(loadline);
+            increaseSequence(pathToDir);
         }
     }
     
-
+    writeOutTableFile(table, pathToDir, columnNames);
 
     unlockTable(pathToDir);
 }
@@ -378,10 +424,10 @@ int main()
     // Pomnit` pro probeli v .csv
 
     //checkDB();
-    // string input;
-    // getline(cin, input);
-    // Myvector<string> commandVector = handleUserInput(input);
-    // handleCommands(commandVector);
+     string input;
+    getline(cin, input);
+    Myvector<string> commandVector = handleUserInput(input);
+    handleCommands(commandVector);
 
     //INCREASE and DECREASE!!!!!
 

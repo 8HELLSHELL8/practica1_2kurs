@@ -101,6 +101,8 @@ private:
    uint32_t capacity;
    Hbuckets<T>* arr;
 
+   uint32_t currentSize;
+
    uint32_t hash(const std::string& value)
    {
        uint32_t hash = 5381;
@@ -115,14 +117,16 @@ public:
   
    HASHtable()
    {
-       arr = new Hbuckets<T>[50];  
-       capacity = 10;
+       arr = new Hbuckets<T>[20];  
+       capacity = 20;
+       currentSize = 0;
    }
 
    HASHtable(int capacityValue)
    {
        arr = new Hbuckets<T>[capacityValue];  // Âûäåëÿåì ìàññèâ áàêåòîâ
        capacity = capacityValue;
+       currentSize = 0;
    }
    
    // Ìåòîä âñòàâêè ýëåìåíòà
@@ -130,6 +134,7 @@ public:
    {
        uint32_t index = hash(key);  // Ïîëó÷àåì èíäåêñ
        arr[index].push_back(key, value);  // Äîáàâëÿåì ýëåìåíò â ñîîòâåòñòâóþùèé áàêåò
+       currentSize += 1;
    }
 
    // Ìåòîä ïîëó÷åíèÿ ýëåìåíòà ïî êëþ÷ó
@@ -144,6 +149,12 @@ public:
    {
        uint32_t index = hash(key);  // Ïîëó÷àåì èíäåêñ
        arr[index].remove(key);  // Óäàëÿåì ýëåìåíò èç ñîîòâåòñòâóþùåãî áàêåòà
+       currentSize -= 1;
+   }
+
+   uint32_t size()
+   {
+    return currentSize;
    }
 
    // Ïå÷àòü âñåõ áàêåòîâ
