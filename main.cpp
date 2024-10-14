@@ -425,32 +425,47 @@ Myvector<string> handleCondition(string condition)
 {
     Myvector<string> elements;
     string word = "";
+    
     for (int i = 0; i < condition.size(); i++)
     {
-        if (condition[i] != '.' || condition[i] != ' ' || condition[i] != '\'')
+        // Проверяем, чтобы символ не был точкой, пробелом или апострофом
+        if (condition[i] != '.' && condition[i] != ' ' && condition[i] != '\'')
         {
-            word += condition[i];
-        }
-        if (condition[i] == '=')
-        {
-            elements.MPUSH(word);
-            elements.MPUSH("=");
-            word = "";
+            // Если символ - '=', добавляем предыдущее слово, если оно не пустое
+            if (condition[i] == '=')
+            {
+                if (!word.empty())
+                {
+                    elements.MPUSH(word);
+                    word = ""; // очищаем word для нового слова
+                }
+                elements.MPUSH("="); // добавляем знак равенства как отдельный элемент
+            }
+            else
+            {
+                word += condition[i]; // добавляем символ к текущему слову
+            }
         }
         else
         {
-            elements.MPUSH(word);
-            word = "";
+            // Если встретили пробел или другой разделительный символ, добавляем слово в вектор
+            if (!word.empty())
+            {
+                elements.MPUSH(word);
+                word = ""; // очищаем word для нового слова
+            }
         }
     }
+
+    // Добавляем последнее слово, если оно не пустое
+    if (!word.empty())
+    {
+        elements.MPUSH(word);
+    }
+
     return elements;
 }
 
-bool checkCondition()
-{   
-    return false;
-    return true;
-}
 
 void deleteFromTable(string tableName, string condition)
 {
