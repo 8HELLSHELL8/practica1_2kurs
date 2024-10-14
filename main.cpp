@@ -466,6 +466,10 @@ Myvector<string> handleCondition(string condition)
     return elements;
 }
 
+bool checkCondition()
+{
+    
+}
 
 void deleteFromTable(string tableName, string condition)
 {
