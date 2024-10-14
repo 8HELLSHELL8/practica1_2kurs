@@ -365,7 +365,6 @@ void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir
     unlockTable(pathToDir);  // Разблокируем таблицу
 }
 
-//НАПИСАТЬ СМЕНУ ФАЙЛА ТАБЛИЦЫ ПРИ ПЕРЕПОЛНЕНИИ
 
 void selectColumns(std::string tableNameFirst, std::string firstValue, 
                    std::string tableNameSecond, std::string secondValue)
