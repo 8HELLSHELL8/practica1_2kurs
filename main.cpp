@@ -285,12 +285,14 @@ void writeOutTableFile(Myvector<HASHtable<string>>& table, const string& pathToD
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
 Myvector<string>& values, Myvector<string>& columnNames)
 {
-    lockTable(pathToDir);
+     lockTable(pathToDir);
 
     int tableWidth = columnNames.size();
     HASHtable<string> loadline;
+
     if (tableWidth == values.size())
     {
+        // Case 1: Equal size between column names and values
         for (int i = 0; i < tableWidth; i++)
         {
             loadline.HSET(columnNames[i], values[i]);
@@ -300,7 +302,8 @@ Myvector<string>& values, Myvector<string>& columnNames)
     }
     else if (tableWidth > values.size())
     {
-        for (int i = 0; i < values.size(); i++) // zapolnenie znacheniem
+        // Case 2: More columns than values, fill remaining with "EMPTY_CELL"
+        for (int i = 0; i < values.size(); i++)
         {
             loadline.HSET(columnNames[i], values[i]);
         }
@@ -313,38 +316,29 @@ Myvector<string>& values, Myvector<string>& columnNames)
     }
     else if (tableWidth < values.size())
     {
-        HASHtable<string> loadline;
+        // Case 3: More values than columns, split across multiple rows
         int index = 0;
         while (index < values.size())
         {
-            
-            int tabNameIndex = (index+1 % tableWidth) - 1;
-            if (tabNameIndex == -1) tabNameIndex = tableWidth-1;
-            if((index+1) % tableWidth == 0)
+            loadline = {};  // Start a new row
+
+            for (int i = 0; i < tableWidth && index < values.size(); i++, index++)
             {
-                tabNameIndex = tableWidth - 1;
-                loadline.HSET(columnNames[tabNameIndex], values[index]);
-                table.MPUSH(loadline);
-                increaseSequence(pathToDir);
-                loadline = {};
-            }   
-            else
-            {
-                loadline.HSET(columnNames[tabNameIndex], values[index]);
+                loadline.HSET(columnNames[i], values[index]);
             }
-            index++;
-        }
-        if (loadline.size() != 0)
-        {
+
+            // If this row is incomplete, fill remaining columns with "EMPTY_CELL"
             for (int i = loadline.size(); i < tableWidth; i++)
             {
-                loadline.HSET(columnNames[i],"EMPTY_CELL");
+                loadline.HSET(columnNames[i], "EMPTY_CELL");
             }
-            table.MPUSH(loadline);
+
+            table.MPUSH(loadline);  // Push the row to the table
             increaseSequence(pathToDir);
         }
     }
-    
+
+    // Write the table data to file
     writeOutTableFile(table, pathToDir, columnNames);
 
     unlockTable(pathToDir);
