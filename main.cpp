@@ -8,8 +8,6 @@
 #include "HashTable.h"
 using namespace std;
 
-
-
 string readJSON(const string& fileName)
 {
     fstream file(fileName);
@@ -102,17 +100,6 @@ void createDB()
     cJSON_Delete(json);
 }
 
-void checkDB()
-{
-    bool isCreated = false;
-    fstream jsonConfig("schema.json");
-    if (jsonConfig.good() && !std::filesystem::exists("DBflag"))
-    {
-        createDB();
-        cout << "database created!" << endl;
-    } 
-    else cout << "database already exists!" << endl;
-}
 
 Myvector<string> getLineNames(string rawLine)
 {
@@ -640,24 +627,29 @@ Myvector<string> handleUserInput(const string& input)
     return commandArray;
 }
 
-int main()
-{
-    setlocale(LC_ALL, "RU");
-    // Pomnit` pro probeli v .csv
 
-    //checkDB();
+void checkDB()
+{
+    bool isCreated = false;
+    fstream jsonConfig("schema.json");
+    if (jsonConfig.good() && !std::filesystem::exists("DBflag"))
+    {
+        createDB();
+        cout << "database created!" << endl;
+    } 
+    else cout << "database already exists!" << endl;
     string input;
     getline(cin, input);
     Myvector<string> commandVector = handleUserInput(input);
     handleCommands(commandVector);
+}
 
-    //INCREASE and DECREASE!!!!!
-
+int main()
+{
+    setlocale(LC_ALL, "RU");
     
 
-    //Myvector<HASHtable<string>> tablica1 = readTableContent("таблица1");
-    //cout << tablica1.size() << endl;
-    //tablica1[0].print();
+    checkDB();
     
     return 0;
 }
