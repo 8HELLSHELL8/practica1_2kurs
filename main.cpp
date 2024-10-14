@@ -367,24 +367,60 @@ void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir
 
 //НАПИСАТЬ СМЕНУ ФАЙЛА ТАБЛИЦЫ ПРИ ПЕРЕПОЛНЕНИИ
 
-void selectColumns(string tableNameFirst, string firstValue, string tableNameSecond, string secondValue)
+void selectColumns(std::string tableNameFirst, std::string firstValue, 
+                   std::string tableNameSecond, std::string secondValue)
 {
-    Myvector<string> columnNamesFirst;
-    Myvector<HASHtable<string>> firstTable = readTableContent(tableNameFirst,columnNamesFirst);
+    // Чтение содержимого первой таблицы
+    Myvector<std::string> columnNamesFirst;
+    Myvector<HASHtable<std::string>> firstTable = readTableContent(tableNameFirst, columnNamesFirst);
 
-    Myvector<string> columnNamesSecond;
-    Myvector<HASHtable<string>> secondTable = readTableContent(tableNameSecond,columnNamesSecond);
+    // Чтение содержимого второй таблицы
+    Myvector<std::string> columnNamesSecond;
+    Myvector<HASHtable<std::string>> secondTable = readTableContent(tableNameSecond, columnNamesSecond);
 
-    for (int i = 0; i< firstTable.size(); i++)
-    {
-        for (int j = 0; j < secondTable.size(); j++)
-        {
-            cout << firstTable[i].HGET(firstValue) << " " << secondTable[j].HGET(secondValue);
-        }
-        cout << endl;
+    // Проверка на наличие данных в таблицах
+    if (firstTable.size() == 0 || secondTable.size() == 0) {
+        std::cerr << "Error: One or both tables are empty or could not be read.\n";
+        return;
     }
 
+    // Проверка существования колонок в первой таблице
+    bool foundFirstValue = false;
+    for (int i = 0; i < columnNamesFirst.size(); i++) {
+        if (columnNamesFirst[i] == firstValue) {
+            foundFirstValue = true;
+            break;
+        }
+    }
+
+    // Проверка существования колонок во второй таблице
+    bool foundSecondValue = false;
+    for (int i = 0; i < columnNamesSecond.size(); i++) {
+        if (columnNamesSecond[i] == secondValue) {
+            foundSecondValue = true;
+            break;
+        }
+    }
+
+    // Если одна из колонок не найдена, выводим ошибку
+    if (!foundFirstValue || !foundSecondValue) {
+        std::cerr << "Error: One or both column names not found in the tables.\n";
+        return;
+    }
+
+    // Вывод заголовков
+    std::cout << firstValue << " | " << secondValue << "\n";
+    std::cout << "--------------------\n";
+
+    // Выполнение декартова произведения: перебор строк из первой и второй таблиц
+    for (int i = 1; i < firstTable.size(); i++) {
+        for (int j = 1; j < secondTable.size(); j++) {
+            std::cout << firstTable[i].HGET(firstValue) << " | " 
+                      << secondTable[j].HGET(secondValue) << "\n";
+        }
+    }
 }
+
 void handleCommands(Myvector<string>& commandVector)
 {
     //commandVector.print();
