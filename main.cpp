@@ -248,7 +248,6 @@ void decreaseSequence(const string& pathToDir)
     
 }
 
-
 bool isFileEmpty(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::ate);  // ios::ate открывает файл в конце
     return file.tellg() == 0;  // Если позиция указателя 0, значит файл пустой
@@ -367,9 +366,11 @@ void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir
 
 
 void selectColumns(std::string tableNameFirst, std::string firstValue, 
-                   std::string tableNameSecond, std::string secondValue)
+                   std::string tableNameSecond, std::string secondValue,
+                   Myvector<string> condition)
 {
     // Чтение содержимого первой таблицы
+    condition.print();
     Myvector<std::string> columnNamesFirst;
     Myvector<HASHtable<std::string>> firstTable = readTableContent(tableNameFirst, columnNamesFirst);
 
@@ -513,8 +514,7 @@ void deleteFromTable(string tableName, string condition)
     lockTable(tableName);
     Myvector<string> columnNames;
     Myvector<string> conditionArray = handleCondition(condition);
-    conditionArray.print();
-   conditionArray.MDEL(0);
+    conditionArray.MDEL(0);
     Myvector<HASHtable<std::string>> table = readTableContent(tableName, columnNames);
     for (int i = 0; i < table.size(); i++)
     {
@@ -551,7 +551,9 @@ void handleCommands(Myvector<string>& commandVector)
         commandVector.MDEL(0);
         string secondValue = commandVector[0];
         commandVector.MDEL(0);
-        selectColumns(firstTable, firstValue,  secondTable, secondValue);
+        Myvector<string> condition = handleCondition(commandVector[0]);
+        selectColumns(firstTable, firstValue,  secondTable, secondValue,
+        condition);
     }
     else if (commandVector[0] == "INSERT" && commandVector[1] == "INTO")
     {
@@ -583,7 +585,6 @@ void handleCommands(Myvector<string>& commandVector)
         string tableName = commandVector[0];
         commandVector.MDEL(0);
         commandVector.MDEL(0);
-        commandVector.print();
         deleteFromTable(tableName, commandVector[0]);
         
     }
