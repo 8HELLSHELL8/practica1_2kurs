@@ -365,8 +365,18 @@ void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir
     unlockTable(pathToDir);  // Разблокируем таблицу
 }
 
+//НАПИСАТЬ СМЕНУ ФАЙЛА ТАБЛИЦЫ ПРИ ПЕРЕПОЛНЕНИИ
 
+void selectColumns(string tableNameFirst, string firstValue, string tableNameSecond, string secondValue)
+{
+    Myvector<string> columnNamesFirst;
+    Myvector<HASHtable<string>> firstTable = readTableContent(tableNameFirst,columnNamesFirst);
 
+    Myvector<string> columnNamesSecond;
+    Myvector<HASHtable<string>> firstTable = readTableContent(tableNameFirst,columnNamesSecond);
+
+   
+}
 void handleCommands(Myvector<string>& commandVector)
 {
     //commandVector.print();
@@ -382,8 +392,15 @@ void handleCommands(Myvector<string>& commandVector)
         cout << "SELECT FROM has been called!" << endl;
         commandVector.print();
 
-        Myvector<string> selectedCell; // table1.column1 etc
-
+        string firstTable = commandVector[0];
+        commandVector.MDEL(0);
+        string firstValue = commandVector[0];
+        commandVector.MDEL(0);
+        string secondTable = commandVector[0];
+        commandVector.MDEL(0);
+        string secondValue = commandVector[0];
+        commandVector.MDEL(0);
+        selectColumns(firstTable, firstValue,  secondTable, secondValue);
     }
     else if (commandVector[0] == "INSERT" && commandVector[1] == "INTO")
     {
@@ -405,7 +422,7 @@ void handleCommands(Myvector<string>& commandVector)
         Myvector<string> columnNames;
         Myvector<HASHtable<string>> fullTable = readTableContent(tableName, columnNames);
         insertIntoTable(fullTable,tableName,commandVector, columnNames);
-        cout << "ROFLOfsdfsfsdf";
+        
     }
     else if (commandVector[0] == "DELETE" && commandVector[1] == "FROM")
     {
@@ -413,6 +430,7 @@ void handleCommands(Myvector<string>& commandVector)
         commandVector.MDEL(0);
         cout << "DELETE FROM has been called!" << endl;
         commandVector.print();
+        
     }
 }
 
@@ -423,7 +441,7 @@ Myvector<string> handleUserInput(const string& input)
     
     for (int i = 0; i < input.size(); i++)
     {
-        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')')
+        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')' || input[i]=='.' || input[i]=='=')
         {
             if (command.size() != 0) commandArray.MPUSH(command);
             command = "";

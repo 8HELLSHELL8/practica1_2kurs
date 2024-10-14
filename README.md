@@ -1,1 +1,1 @@
-INSERT INTO таблица1 VALUES ('123','321')
+SELECT table1.column1, table2.column1 FROM table1, table2
