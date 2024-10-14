@@ -373,9 +373,17 @@ void selectColumns(string tableNameFirst, string firstValue, string tableNameSec
     Myvector<HASHtable<string>> firstTable = readTableContent(tableNameFirst,columnNamesFirst);
 
     Myvector<string> columnNamesSecond;
-    Myvector<HASHtable<string>> firstTable = readTableContent(tableNameFirst,columnNamesSecond);
+    Myvector<HASHtable<string>> secondTable = readTableContent(tableNameSecond,columnNamesSecond);
 
-   
+    for (int i = 0; i< firstTable.size(); i++)
+    {
+        for (int j = 0; j < secondTable.size(); j++)
+        {
+            cout << firstTable[i].HGET(firstValue) << " " << secondTable[j].HGET(secondValue);
+        }
+        cout << endl;
+    }
+
 }
 void handleCommands(Myvector<string>& commandVector)
 {
