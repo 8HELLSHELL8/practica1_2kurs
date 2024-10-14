@@ -254,41 +254,6 @@ bool isFileEmpty(const std::string& filePath) {
     return file.tellg() == 0;  // Если позиция указателя 0, значит файл пустой
 }
 
-// Структура для представления условия
-struct Condition {
-    std::string column;
-    std::string value;
-    std::string logic; // AND/OR (может быть пустым для первого условия)
-};
-
-// Функция для разбора условий из WHERE и разделения их на отдельные части
-Myvector<Condition> parseConditions(const std::string& whereClause) {
-    Myvector<Condition> conditions;
-    std::stringstream ss(whereClause);
-    std::string token;
-    
-    Condition condition;
-    while (ss >> token) {
-        if (token == "AND" || token == "OR") {
-            condition.logic = token;
-        } else if (token.find('=') != std::string::npos) {
-            size_t pos = token.find('=');
-            condition.column = token.substr(0, pos);
-            condition.value = token.substr(pos + 1);
-            conditions.MPUSH(condition);
-            condition = {};  // Сбрасываем для следующего условия
-        }
-    }
-    
-    return conditions;
-}
-
-// Функция для проверки отдельного условия на строке таблицы
-bool checkCondition(HASHtable<std::string>& row, const Condition& condition) {
-    return row.HGET(condition.column) == condition.value;
-}
-
-
 void writeOutTableFile(Myvector<HASHtable<std::string>>& table, 
                        const std::string& pathToDir, 
                        Myvector<std::string>& columnNames)
@@ -348,40 +313,6 @@ void writeOutTableFile(Myvector<HASHtable<std::string>>& table,
         pk_seq_out.close();
     }
 }
-
-void deleteFromTable(const std::string& tableName, const std::string& conditionsStr) {
-    Myvector<std::string> columnNames;
-    Myvector<HASHtable<std::string>> table = readTableContent(tableName, columnNames);
-    Myvector<HASHtable<std::string>> updatedTable;
-
-    // Парсим условия (вместо строки теперь мы получаем структуры Condition)
-    Myvector<Condition> conditions = parseConditions(conditionsStr);
-
-    // Перебираем строки таблицы
-    for (int i = 0; i < table.size(); i++) {
-        bool deleteRow = true;  // Флаг для удаления строки
-
-        // Проверка всех условий
-        for (int j = 0; j < conditions.size(); j++) {
-            const Condition& cond = conditions[j];
-
-            // Проверка текущего условия
-            if (!checkCondition(table[i], cond)) {
-                deleteRow = false;  // Если хотя бы одно условие не выполнено, не удаляем строку
-                break;
-            }
-        }
-
-        // Если строка не соответствует условиям, добавляем её в новую таблицу
-        if (!deleteRow) {
-            updatedTable.MPUSH(table[i]);
-        }
-    }
-
-    // Перезаписываем таблицу, сохраняя только оставшиеся строки
-    writeOutTableFile(updatedTable, tableName, columnNames);
-}
-
 
 void insertIntoTable(Myvector<HASHtable<string>>& table, const string& pathToDir,
                      Myvector<string>& values, Myvector<string>& columnNames)
@@ -503,7 +434,7 @@ void handleCommands(Myvector<string>& commandVector)
         
         commandVector.MDEL(0);
         cout << "SELECT FROM has been called!" << endl;
-        //commandVector.print();
+        commandVector.print();
 
         string firstTable = commandVector[0];
         commandVector.MDEL(0);
@@ -542,67 +473,30 @@ void handleCommands(Myvector<string>& commandVector)
         commandVector.MDEL(0);
         commandVector.MDEL(0);
         cout << "DELETE FROM has been called!" << endl;
-        //commandVector.print();
-        string tableName = commandVector[0];
-        commandVector.MDEL(0);
-        if (commandVector[0] != "WHERE")
-        {
-            cerr << "Syntax error in where condition!" << endl;
-            return;
-        }
-        commandVector.MDEL(0);
-        deleteFromTable(tableName,commandVector[0]);
-        
+        commandVector.print();
         
     }
 }
 
-Myvector<string> handleUserInput(const string& input, string& conditions)
+Myvector<string> handleUserInput(const string& input)
 {
     string command = "";
     Myvector<string> commandArray;
-    bool isWhereClause = false;  // Флаг для определения секции WHERE
-
+    
     for (int i = 0; i < input.size(); i++)
     {
-        // Если встречаем WHERE, всё, что идёт после, должно быть одним элементом
-        if (!isWhereClause && i + 5 <= input.size() && input.substr(i, 5) == "WHERE")
+        if (input[i] == ' '|| input[i] == '\'' || input[i] == ','|| input[i] == '(' || input[i] == ')' || input[i]=='.' || input[i]=='=')
         {
             if (command.size() != 0) commandArray.MPUSH(command);
-            commandArray.MPUSH("WHERE");  // Добавляем ключевое слово WHERE
             command = "";
-            i += 4;  // Пропускаем слово WHERE
-            isWhereClause = true;  // Активируем флаг секции WHERE
-            continue;
-        }
-
-        if (isWhereClause)
-        {
-            // Всё, что идёт после WHERE, добавляем как одно целое в переменную conditions
-            conditions += input[i];
         }
         else
         {
-            // До WHERE обрабатываем как раньше, разделяя по символам-разделителям
-            if (input[i] == ' ' || input[i] == '\'' || input[i] == ',' || 
-                input[i] == '(' || input[i] == ')' || input[i] == '.' || input[i] == '=')
-            {
-                if (command.size() != 0) commandArray.MPUSH(command);
-                command = "";
-            }
-            else
-            {
-                command += input[i];
-            }
+            command += input[i];
         }
     }
-
-    // Добавляем последнее значение в массив, если оно не пустое
-    if (command.size() != 0 && !isWhereClause) commandArray.MPUSH(command);
-
     return commandArray;
 }
-
 
 int main()
 {
@@ -611,8 +505,7 @@ int main()
     //checkDB();
     string input;
     getline(cin, input);
-    string condition;
-    Myvector<string> commandVector = handleUserInput(input, condition);
+    Myvector<string> commandVector = handleUserInput(input);
     handleCommands(commandVector);
 
     //INCREASE and DECREASE!!!!!
