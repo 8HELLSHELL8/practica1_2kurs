@@ -246,7 +246,7 @@ void writeOutTableFile(Myvector<HASHtable<std::string>>& table,
 {
     // Пути к файлам
     std::string sequencePath = "Схема 1/" + pathToDir + "/" + pathToDir + "_pk_sequence";
-    std::string tablePath = "Схема 1/" + pathToDir + "/1.csv";
+    
 
     // Чтение количества строк из sequence-файла
     std::string pk_seqInput;
@@ -258,6 +258,14 @@ void writeOutTableFile(Myvector<HASHtable<std::string>>& table,
     std::getline(pk_seq, pk_seqInput);
     int amountOfLines = std::stoi(pk_seqInput);
     pk_seq.close();
+
+
+    string currentTableNum = "1";
+    for (int i = 0; i < amountOfLines; i + 1000)
+    {
+        currentTableNum = to_string(i);
+    }
+    std::string tablePath = "Схема 1/" + pathToDir + "/" + currentTableNum + ".csv";
 
     // Открываем CSV файл в режиме добавления (или создаем новый с очисткой)
     std::ofstream tableFile(tablePath, std::ios::out | std::ios::trunc);
@@ -277,6 +285,9 @@ void writeOutTableFile(Myvector<HASHtable<std::string>>& table,
         tableFile << " ";
         tableFile << '\n';  // Переход на новую строку после заголовков
     }
+
+    int startLineNumber = (stoi(currentTableNum)-1) * 1000 + 1;
+    int endLineNum = min(stoi(currentTableNum)*1000, amountOfLines);
 
     // --- Записываем строки данных ---
     for (int i = 1; i < table.size(); ++i) {
@@ -648,7 +659,6 @@ int main()
 {
     setlocale(LC_ALL, "RU");
     
-
     checkDB();
     
     return 0;
